@@ -343,100 +343,100 @@ bool AFLCoverage::runOnModule(Module &M)
           }
         }
 
-        // else if (auto *callInst = dyn_cast<CallInst>(&Inst))
-        // {
-        //   Function *function = callInst->getCalledFunction();
+        else if (auto *callInst = dyn_cast<CallInst>(&Inst))
+        {
+          Function *function = callInst->getCalledFunction();
 
-        //   if (!function)
-        //     continue;
+          if (!function)
+            continue;
 
-        //   // malloc 或者 new
-        //   if ((function->getName() == "malloc") || (function->getName() == "_Znam"))
-        //   {
-        //     Value *sizeValue = callInst->getArgOperand(0);
+          // malloc 或者 new
+          if ((function->getName() == "malloc") || (function->getName() == "_Znam"))
+          {
+            Value *sizeValue = callInst->getArgOperand(0);
 
-        //     // 访存大小是常量
-        //     if (ConstantInt *sizeConst = dyn_cast<ConstantInt>(sizeValue))
-        //     {
-        //       int size = sizeConst->getZExtValue();
-        //       // 找下一条指令
-        //       Instruction *nextInst = callInst->getNextNode();
-        //       Instruction *nextNextInst = nextInst->getNextNode();
-        //       // 找到store
-        //       StoreInst *storeInst = nullptr;
+            // 访存大小是常量
+            if (ConstantInt *sizeConst = dyn_cast<ConstantInt>(sizeValue))
+            {
+              int size = sizeConst->getZExtValue();
+              // 找下一条指令
+              Instruction *nextInst = callInst->getNextNode();
+              Instruction *nextNextInst = nextInst->getNextNode();
+              // 找到store
+              StoreInst *storeInst = nullptr;
 
-        //       if (auto *bitCastInst = dyn_cast<BitCastInst>(nextInst))
-        //       {
-        //         if (StoreInst *storeInstTemp = dyn_cast<StoreInst>(nextNextInst))
-        //           storeInst = storeInstTemp;
-        //       }
-        //       else if (StoreInst *storeInstTemp = dyn_cast<StoreInst>(nextInst))
-        //       {
-        //         storeInst = storeInstTemp;
-        //       }
+              if (auto *bitCastInst = dyn_cast<BitCastInst>(nextInst))
+              {
+                if (StoreInst *storeInstTemp = dyn_cast<StoreInst>(nextNextInst))
+                  storeInst = storeInstTemp;
+              }
+              else if (StoreInst *storeInstTemp = dyn_cast<StoreInst>(nextInst))
+              {
+                storeInst = storeInstTemp;
+              }
 
-        //       if (storeInst)
-        //       {
-        //         // 把malloc的入参存如store的第二个操作数
-        //         Value *storedPointer = storeInst->getPointerOperand();
-        //         if (auto *pointerValue = dyn_cast<Instruction>(storedPointer))
-        //         {
-        //           if (pointerValue->getOpcode() == Instruction::Alloca)
-        //           {
-        //             // Found %4: store i32* %11, i32** %4, align 8
-        //             // 开辟二维数组...n维数组，这些情况都可以包含：
-        //             // store i32** %21, i32*** %7, align 8
-        //             Instruction *allocaInst = pointerValue;
-        //             errs() << "Const:" << *allocaInst << "  Size:  " << size << '\n';
-        //             if (ptrMapConst.count(allocaInst))
-        //             {
-        //               ptrMapConst[allocaInst] = size;
-        //               errs() << "store size: " << size << "\n";
-        //             }
-        //           }
-        //         }
-        //       }
-        //     }
-        //     // 访存大小是变量
-        //     else if (Instruction *sizeVar = dyn_cast<Instruction>(sizeValue))
-        //     {
-        //       // 找下一条指令
-        //       Instruction *nextInst = callInst->getNextNode();
-        //       Instruction *nextNextInst = nextInst->getNextNode();
-        //       // 找到store
-        //       StoreInst *storeInst = nullptr;
+              if (storeInst)
+              {
+                // 把malloc的入参存如store的第二个操作数
+                Value *storedPointer = storeInst->getPointerOperand();
+                if (auto *pointerValue = dyn_cast<Instruction>(storedPointer))
+                {
+                  if (pointerValue->getOpcode() == Instruction::Alloca)
+                  {
+                    // Found %4: store i32* %11, i32** %4, align 8
+                    // 开辟二维数组...n维数组，这些情况都可以包含：
+                    // store i32** %21, i32*** %7, align 8
+                    Instruction *allocaInst = pointerValue;
+                    errs() << "Const:" << *allocaInst << "  Size:  " << size << '\n';
+                    if (ptrMapConst.count(allocaInst))
+                    {
+                      ptrMapConst[allocaInst] = size;
+                      errs() << "store size: " << size << "\n";
+                    }
+                  }
+                }
+              }
+            }
+            // 访存大小是变量
+            else if (Instruction *sizeVar = dyn_cast<Instruction>(sizeValue))
+            {
+              // 找下一条指令
+              Instruction *nextInst = callInst->getNextNode();
+              Instruction *nextNextInst = nextInst->getNextNode();
+              // 找到store
+              StoreInst *storeInst = nullptr;
 
-        //       if (auto *bitCastInst = dyn_cast<BitCastInst>(nextInst))
-        //       {
-        //         if (StoreInst *storeInstTemp = dyn_cast<StoreInst>(nextNextInst))
-        //           storeInst = storeInstTemp;
-        //       }
-        //       else if (StoreInst *storeInstTemp = dyn_cast<StoreInst>(nextInst))
-        //       {
-        //         storeInst = storeInstTemp;
-        //       }
+              if (auto *bitCastInst = dyn_cast<BitCastInst>(nextInst))
+              {
+                if (StoreInst *storeInstTemp = dyn_cast<StoreInst>(nextNextInst))
+                  storeInst = storeInstTemp;
+              }
+              else if (StoreInst *storeInstTemp = dyn_cast<StoreInst>(nextInst))
+              {
+                storeInst = storeInstTemp;
+              }
 
-        //       if (storeInst)
-        //       {
-        //         // 把malloc的入参存如store的第二个操作数
-        //         Value *storedPointer = storeInst->getPointerOperand();
-        //         if (auto *pointerValue = dyn_cast<Instruction>(storedPointer))
-        //         {
-        //           if (pointerValue->getOpcode() == Instruction::Alloca)
-        //           {
-        //             // Found %4: store i32* %11, i32** %4, align 8
-        //             Instruction *allocaInst = pointerValue;
-        //             errs() << "Var:" << *allocaInst << "  Size:  " << *sizeVar << '\n';
-        //             if (ptrMapVar.count(allocaInst))
-        //             {
-        //               ptrMapVar[allocaInst] = sizeVar;
-        //             }
-        //           }
-        //         }
-        //       }
-        //     }
-        //   }
-        // }
+              if (storeInst)
+              {
+                // 把malloc的入参存如store的第二个操作数
+                Value *storedPointer = storeInst->getPointerOperand();
+                if (auto *pointerValue = dyn_cast<Instruction>(storedPointer))
+                {
+                  if (pointerValue->getOpcode() == Instruction::Alloca)
+                  {
+                    // Found %4: store i32* %11, i32** %4, align 8
+                    Instruction *allocaInst = pointerValue;
+                    errs() << "Var:" << *allocaInst << "  Size:  " << *sizeVar << '\n';
+                    if (ptrMapVar.count(allocaInst))
+                    {
+                      ptrMapVar[allocaInst] = sizeVar;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
 
         // else if (auto *GEP = dyn_cast<GetElementPtrInst>(&Inst))
         // {
