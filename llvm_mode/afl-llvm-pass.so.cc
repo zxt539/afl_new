@@ -215,28 +215,28 @@ bool AFLCoverage::runOnModule(Module &M)
 
   /* 扫描所有的全局变量 */
 
-  // for (auto &G : M.globals())
-  // {
-  //   if (G.isDeclaration() || G.isThreadLocal() || G.isExternallyInitialized() || llvm::GlobalValue::isExternalLinkage(G.getLinkage()))
-  //     continue;
+  for (auto &G : M.globals())
+  {
+    if (G.isDeclaration() || G.isThreadLocal() || G.isExternallyInitialized() || llvm::GlobalValue::isExternalLinkage(G.getLinkage()))
+      continue;
 
-  //   StringRef Name = G.getName();
-  //   Type *Ty = G.getType();
-  //   // errs() << "Global variable: " << Name << ", type: " << *Ty << "\n";
+    StringRef Name = G.getName();
+    Type *Ty = G.getType();
+    // errs() << "Global variable: " << Name << ", type: " << *Ty << "\n";
 
-  //   PointerType *ptrType = dyn_cast<PointerType>(G.getType());
-  //   // 如果操作数是指针的指针
-  //   if (ptrType->getElementType()->isPointerTy())
-  //   {
-  //     Instruction *ptrInst = dyn_cast<Instruction>(&G);
-  //     if (!ptrMapConst.count(ptrInst) && !ptrMapVar.count(ptrInst))
-  //     {
-  //       // 默认访存大小先设置成0
-  //       ptrMapConst[ptrInst] = 0;
-  //       ptrMapVar[ptrInst] = nullptr;
-  //     }
-  //   }
-  // }
+    PointerType *ptrType = dyn_cast<PointerType>(G.getType());
+    // 如果操作数是指针的指针
+    if (ptrType->getElementType()->isPointerTy())
+    {
+      Instruction *ptrInst = dyn_cast<Instruction>(&G);
+      if (!ptrMapConst.count(ptrInst) && !ptrMapVar.count(ptrInst))
+      {
+        // 默认访存大小先设置成0
+        ptrMapConst[ptrInst] = 0;
+        ptrMapVar[ptrInst] = nullptr;
+      }
+    }
+  }
 
   /* Our Instrument before afl's */
 
