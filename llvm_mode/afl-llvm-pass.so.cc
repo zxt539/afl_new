@@ -480,7 +480,7 @@ bool AFLCoverage::runOnModule(Module &M)
         //       }
         //     }
         //   }
-        }
+        // }
       }
     }
   }
