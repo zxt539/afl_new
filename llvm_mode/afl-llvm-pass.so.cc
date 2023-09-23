@@ -252,96 +252,96 @@ bool AFLCoverage::runOnModule(Module &M)
     {
       for (auto &Inst : BB)
       {
-        // if (auto *allocate = dyn_cast<AllocaInst>(&Inst))
-        // {
-        //   // 找到分配指针变量的
-        //   if (allocate->getAllocatedType()->isPointerTy())
-        //   {
+        if (auto *allocate = dyn_cast<AllocaInst>(&Inst))
+        {
+          // 找到分配指针变量的
+          if (allocate->getAllocatedType()->isPointerTy())
+          {
 
-        //     /*
-        //        由于不知道给这个指针分配的内存大小是常量还是变量，
-        //        因此两个map里面，先暂时都加一下
-        //     */
-        //     if (ptrMapConst.count(&Inst) > 0 || ptrMapVar.count(&Inst))
-        //       continue;
+            /*
+               由于不知道给这个指针分配的内存大小是常量还是变量，
+               因此两个map里面，先暂时都加一下
+            */
+            if (ptrMapConst.count(&Inst) > 0 || ptrMapVar.count(&Inst))
+              continue;
 
-        //     // 默认访存大小先设置成0
-        //     ptrMapConst[&Inst] = 0;
-        //     ptrMapVar[&Inst] = nullptr;
-        //   }
-        // }
+            // 默认访存大小先设置成0
+            ptrMapConst[&Inst] = 0;
+            ptrMapVar[&Inst] = nullptr;
+          }
+        }
 
-        // // 处理通过指针赋值的情况
-        // else if (auto *loadInst = dyn_cast<LoadInst>(&Inst))
-        // {
-        //   // 判断操作数是否为指针
-        //   Value *loadPtr = loadInst->getPointerOperand();
-        //   if (!loadPtr)
-        //     continue;
+        // 处理通过指针赋值的情况
+        else if (auto *loadInst = dyn_cast<LoadInst>(&Inst))
+        {
+          // 判断操作数是否为指针
+          Value *loadPtr = loadInst->getPointerOperand();
+          if (!loadPtr)
+            continue;
 
-        //   // 进一步判断load的操作数
-        //   if (PointerType *ptrType = dyn_cast<PointerType>(loadPtr->getType()))
-        //   {
-        //     // 如果操作数是指针的指针
-        //     if (ptrType->getElementType()->isPointerTy())
-        //     {
-        //       // 双重保证，找到接下来的指令，并且在load的user list里面
-        //       // 其实不用保证也行
-        //       Instruction *nextInst = loadInst->getNextNode();
-        //       Instruction *nextnextInst = nextInst->getNextNode();
-        //       StoreInst *storeInst = nullptr;
+          // 进一步判断load的操作数
+          if (PointerType *ptrType = dyn_cast<PointerType>(loadPtr->getType()))
+          {
+            // 如果操作数是指针的指针
+            if (ptrType->getElementType()->isPointerTy())
+            {
+              // 双重保证，找到接下来的指令，并且在load的user list里面
+              // 其实不用保证也行
+              Instruction *nextInst = loadInst->getNextNode();
+              Instruction *nextnextInst = nextInst->getNextNode();
+              StoreInst *storeInst = nullptr;
 
-        //       if (auto *bitCastInst = dyn_cast<BitCastInst>(nextInst))
-        //       {
-        //         if (StoreInst *storeInstTemp = dyn_cast<StoreInst>(nextnextInst))
-        //           storeInst = storeInstTemp;
-        //       }
-        //       else if (StoreInst *storeInstTemp = dyn_cast<StoreInst>(nextInst))
-        //       {
-        //         storeInst = storeInstTemp;
-        //       }
+              if (auto *bitCastInst = dyn_cast<BitCastInst>(nextInst))
+              {
+                if (StoreInst *storeInstTemp = dyn_cast<StoreInst>(nextnextInst))
+                  storeInst = storeInstTemp;
+              }
+              else if (StoreInst *storeInstTemp = dyn_cast<StoreInst>(nextInst))
+              {
+                storeInst = storeInstTemp;
+              }
 
-        //       if (storeInst)
-        //       {
-        //         // 获取store的目的指针地址
-        //         Value *pointerValue = storeInst->getPointerOperand();
-        //         Instruction *pointerValueInst = dyn_cast<Instruction>(pointerValue);
+              if (storeInst)
+              {
+                // 获取store的目的指针地址
+                Value *pointerValue = storeInst->getPointerOperand();
+                Instruction *pointerValueInst = dyn_cast<Instruction>(pointerValue);
 
-        //         // 并且store的目的地址是指针的指针类型
-        //         if (isPointerPointer(pointerValue))
-        //         {
-        //           errs() << "指针赋值！\n";
+                // 并且store的目的地址是指针的指针类型
+                if (isPointerPointer(pointerValue))
+                {
+                  errs() << "指针赋值！\n";
 
-        //           // 找到=号右边变量的map，看一下访存大小是变量还是常量
-        //           Instruction *oldPtrInst = dyn_cast<Instruction>(loadPtr);
-        //           bool isConst = false;
-        //           uint64_t size = 0;
-        //           Instruction *sizeValueInst = nullptr;
+                  // 找到=号右边变量的map，看一下访存大小是变量还是常量
+                  Instruction *oldPtrInst = dyn_cast<Instruction>(loadPtr);
+                  bool isConst = false;
+                  uint64_t size = 0;
+                  Instruction *sizeValueInst = nullptr;
 
-        //           // 这个指针，前面一定allocte过，所以肯定在map中
-        //           if (ptrMapConst.count(oldPtrInst) && ptrMapConst[oldPtrInst] != 0)
-        //           {
-        //             isConst = true;
-        //             size = ptrMapConst[oldPtrInst];
-        //             errs() << "5555 " << size << "\n";
-        //           }
-        //           else if (ptrMapVar.count(oldPtrInst) && ptrMapVar[oldPtrInst] != nullptr)
-        //           {
-        //             sizeValueInst = ptrMapVar[oldPtrInst];
-        //           }
+                  // 这个指针，前面一定allocte过，所以肯定在map中
+                  if (ptrMapConst.count(oldPtrInst) && ptrMapConst[oldPtrInst] != 0)
+                  {
+                    isConst = true;
+                    size = ptrMapConst[oldPtrInst];
+                    errs() << "5555 " << size << "\n";
+                  }
+                  else if (ptrMapVar.count(oldPtrInst) && ptrMapVar[oldPtrInst] != nullptr)
+                  {
+                    sizeValueInst = ptrMapVar[oldPtrInst];
+                  }
 
-        //           // 更新=号左边变量的访存大小
-        //           if (isConst)
-        //             // ptrMapConst[allocaInst] = size;
-        //             ptrMapConst[pointerValueInst] = size;
-        //           else
-        //             // ptrMapVar[allocaInst] = sizeValueInst;
-        //             ptrMapVar[pointerValueInst] = sizeValueInst;
-        //         }
-        //       }
-        //     }
-        //   }
-        // }
+                  // 更新=号左边变量的访存大小
+                  if (isConst)
+                    // ptrMapConst[allocaInst] = size;
+                    ptrMapConst[pointerValueInst] = size;
+                  else
+                    // ptrMapVar[allocaInst] = sizeValueInst;
+                    ptrMapVar[pointerValueInst] = sizeValueInst;
+                }
+              }
+            }
+          }
+        }
 
         // else if (auto *callInst = dyn_cast<CallInst>(&Inst))
         // {
