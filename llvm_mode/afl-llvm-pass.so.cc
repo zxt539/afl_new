@@ -128,7 +128,7 @@ void AFLCoverage::insertAflCompare(IRBuilder<> &IRB, Value *curId,
   IRB.CreateCall(compareFunc, {compareFuncArgID,
                                compareFuncArgSize,
                                compareFuncArgIndex});
-}
+} 
 
 void AFLCoverage::insertAflGepStatus(IRBuilder<> &IRB, Value *curId,
                                      Value *index, LLVMContext &C, Module &M, Function *gepStatusFunc)
