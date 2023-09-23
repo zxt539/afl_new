@@ -468,9 +468,9 @@ bool AFLCoverage::runOnModule(Module &M)
                 uint64_t cur_id = id ++;
                 ConstantInt *CurId = ConstantInt::get(Int64Ty, cur_id);
               
-                // /* call compare function */
-                // insertAflCompare(IRB, CurId,
-                //                  arraySize, GEP->getOperand(2), C, M, compareFunc);
+                /* call compare function */
+                insertAflCompare(IRB, CurId,
+                                 arraySize, GEP->getOperand(2), C, M, compareFunc);
 
                 // insertAflGepStatus(IRB, CurId,
                 //                    GEP->getOperand(2), C, M, gepStatusFunc);
