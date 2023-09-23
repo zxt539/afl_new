@@ -128,7 +128,7 @@ void AFLCoverage::insertAflCompare(IRBuilder<> &IRB, Value *curId,
   IRB.CreateCall(compareFunc, {compareFuncArgID,
                                compareFuncArgSize,
                                compareFuncArgIndex});
-} 
+}
 
 void AFLCoverage::insertAflGepStatus(IRBuilder<> &IRB, Value *curId,
                                      Value *index, LLVMContext &C, Module &M, Function *gepStatusFunc)
@@ -438,49 +438,49 @@ bool AFLCoverage::runOnModule(Module &M)
           }
         }
 
-        // else if (auto *GEP = dyn_cast<GetElementPtrInst>(&Inst))
-        // {
-        //   // errs() << "Find a GEP! number of operands:";
-        //   // errs() << GEP->getNumOperands() << '\n';
+        else if (auto *GEP = dyn_cast<GetElementPtrInst>(&Inst))
+        {
+          // errs() << "Find a GEP! number of operands:";
+          // errs() << GEP->getNumOperands() << '\n';
 
-        //   /* 栈数组和全局数组访问 */
+          /* 栈数组和全局数组访问 */
 
-        //   if (GEP->getSourceElementType()->isArrayTy())
-        //   {
-        //     // 例：%14 = getelementptr inbounds [20 x [10 x i32]], [20 x [10 x i32]]* %5, i64 0, i64 8
-        //     // 这种都是有三个操作数的，其实不判断==3也可以，因为不可能有其他情况
-        //     if (GEP->getNumOperands() == 3)
-        //     {
-        //       if (!dyn_cast<ConstantInt>(GEP->getOperand(2)))
-        //       {
-        //         // errs() << "Find a variable stack GEP! \n";
+          if (GEP->getSourceElementType()->isArrayTy())
+          {
+            // 例：%14 = getelementptr inbounds [20 x [10 x i32]], [20 x [10 x i32]]* %5, i64 0, i64 8
+            // 这种都是有三个操作数的，其实不判断==3也可以，因为不可能有其他情况
+            if (GEP->getNumOperands() == 3)
+            {
+              if (!dyn_cast<ConstantInt>(GEP->getOperand(2)))
+              {
+                // errs() << "Find a variable stack GEP! \n";
 
-        //         IRBuilder<> IRB(&Inst);
+                IRBuilder<> IRB(&Inst);
                 
-        //         // if the source type is not array type, continue
-        //         const Type *gepSourceType = GEP->getSourceElementType();
-        //         if (!ArrayType::classof(gepSourceType))
-        //           continue;
+                // if the source type is not array type, continue
+                const Type *gepSourceType = GEP->getSourceElementType();
+                if (!ArrayType::classof(gepSourceType))
+                  continue;
 
-        //         uint64_t array_size = gepSourceType->getArrayNumElements();
-        //         ConstantInt *arraySize = ConstantInt::get(Int64Ty, array_size);
+                uint64_t array_size = gepSourceType->getArrayNumElements();
+                ConstantInt *arraySize = ConstantInt::get(Int64Ty, array_size);
 
-        //         uint64_t cur_id = id ++;
-        //         ConstantInt *CurId = ConstantInt::get(Int64Ty, cur_id);
+                uint64_t cur_id = id ++;
+                ConstantInt *CurId = ConstantInt::get(Int64Ty, cur_id);
               
-        //         // /* call compare function */
-        //         // insertAflCompare(IRB, CurId,
-        //         //                  arraySize, GEP->getOperand(2), C, M, compareFunc);
+                // /* call compare function */
+                // insertAflCompare(IRB, CurId,
+                //                  arraySize, GEP->getOperand(2), C, M, compareFunc);
 
-        //         // insertAflGepStatus(IRB, CurId,
-        //         //                    GEP->getOperand(2), C, M, gepStatusFunc);
+                // insertAflGepStatus(IRB, CurId,
+                //                    GEP->getOperand(2), C, M, gepStatusFunc);
     
-        //         inst_afl_compare ++;
-        //         errs() << array_size << " 0000\n";
-        //       }
-        //     }
-        //   }
-        // }
+                inst_afl_compare ++;
+                errs() << array_size << " 0000\n";
+              }
+            }
+          }
+        }
       }
     }
   }
